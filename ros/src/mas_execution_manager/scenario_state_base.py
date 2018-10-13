@@ -38,8 +38,8 @@ class ScenarioStateBase(smach.State):
         self.msg_store_client = None
         if self.knowledge_storing_enabled:
             try:
-                rospy.wait_for_service('/kcl_rosplan/get_current_knowledge', 5.)
-                self.attribute_fetching_client = rospy.ServiceProxy('/kcl_rosplan/get_current_knowledge',
+                rospy.wait_for_service('/rosplan_knowledge_base/state/propositions', 5.)
+                self.attribute_fetching_client = rospy.ServiceProxy('/rosplan_knowledge_base/state/propositions',
                                                                     rosplan_srvs.GetAttributeService)
                 self.robot_name = ''
                 request = rosplan_srvs.GetAttributeServiceRequest()
