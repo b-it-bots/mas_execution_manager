@@ -36,29 +36,30 @@ class ScenarioStateBase(smach.State):
         self.robot_name = ''
         self.attribute_fetching_client = None
         self.msg_store_client = None
+
+        try:
+            rospy.wait_for_service('/rosplan_knowledge_base/state/propositions', 5.)
+            self.attribute_fetching_client = rospy.ServiceProxy('/rosplan_knowledge_base/state/propositions',
+                                                                rosplan_srvs.GetAttributeService)
+            self.robot_name = ''
+            request = rosplan_srvs.GetAttributeServiceRequest()
+            request.predicate_name = 'robot_name'
+            result = self.attribute_fetching_client(request)
+            for item in result.attributes:
+                for param in item.values:
+                    if param.key == 'bot':
+                        self.robot_name = param.value
+                        break
+                break
+        except (rospy.ServiceException, rospy.ROSException), exc:
+            rospy.logwarn('Service /rosplan_knowledge_base/state/propositions does not appear to exist.\n' +
+                          'If you intend to use the knowledge base, please spawn ' +
+                          'rosplan_knowledge_base/knowledgeBase')
+
         if self.knowledge_storing_enabled:
             try:
-                rospy.wait_for_service('/rosplan_knowledge_base/state/propositions', 5.)
-                self.attribute_fetching_client = rospy.ServiceProxy('/rosplan_knowledge_base/state/propositions',
-                                                                    rosplan_srvs.GetAttributeService)
-                self.robot_name = ''
-                request = rosplan_srvs.GetAttributeServiceRequest()
-                request.predicate_name = 'robot_name'
-                result = self.attribute_fetching_client(request)
-                for item in result.attributes:
-                    for param in item.values:
-                        if param.key == 'bot':
-                            self.robot_name = param.value
-                            break
-                    break
-            except (rospy.ServiceException, rospy.ROSException), exc:
-                rospy.logwarn('Service /kcl_rosplan/get_current_knowledge does not appear to exist.\n' +
-                              'If you intend to use the knowledge base, please spawn ' +
-                              'rosplan_knowledge_base/knowledgeBase')
-
-            try:
                 self.msg_store_client = MessageStoreProxy()
-            except Exception, exc:
+            except:
                 rospy.logwarn('Could not create a mongodb_store proxy.\n' +
                               'If you intend to store online knowledge, please spawn\n' +
                               'mongodb_store/message_store_node.py')
