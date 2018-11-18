@@ -61,8 +61,9 @@ class StateMachine(smach.StateMachine):
                 execution_end_msg[0].stamp.secs < state_msg[0].stamp.secs:
                     return state_msg[0].state
             return None
-        except:
+        except Exception as exc:
             rospy.logerr('[SM creator] Error retriving knowledge about the current state')
+            rospy.logerr(str(exc))
             return None
 
     def save_execution_end(self, sm_id):
@@ -78,14 +79,14 @@ class StateMachine(smach.StateMachine):
 
 
 if __name__ == '__main__':
-    sm_config_file = rospy.get_param('/sm_config_file', '')
-    parent_sm_config_file = rospy.get_param('/parent_sm_config_file', '')
+    rospy.init_node('mas_execution_manager')
+    sm_config_file = rospy.get_param('~sm_config_file', '')
+    parent_sm_config_file = rospy.get_param('~parent_sm_config_file', '')
     sm_data = SMLoader.load_sm(sm_config_file, parent_sm_config_file)
 
-    recover_sm = rospy.get_param('/recover_sm', False)
-    save_sm_state = rospy.get_param('/save_sm_state', False)
+    recover_sm = rospy.get_param('~recover_sm', False)
+    save_sm_state = rospy.get_param('~save_sm_state', False)
 
-    rospy.init_node(sm_data.id)
     state_machine = StateMachine(sm_data,
                                  recover_sm=recover_sm,
                                  save_sm_state=save_sm_state)
