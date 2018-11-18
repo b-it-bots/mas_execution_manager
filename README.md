@@ -19,14 +19,14 @@ The package also defines a scenario state base class that defines various functi
 
 The package has the following structure:
 ```
-mdr_execution_manager
+mas_execution_manager
 |    package.xml
 |    CMakeLists.txt
 |    setup.py
 |    README.md
 |____ros
      |____src
-     |    |____mdr_execution_manager
+     |    |____mas_execution_manager
      |    |    |    __init__.py
      |    |    |    sm_loader.py
      |    |    |    sm_params.py
