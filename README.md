@@ -1,5 +1,15 @@
 # ``mas_execution_manager``
 
+# Table of Contents
+1. [Summary](#Summary)
+2. [Package organisation](#package-organisation)
+3. [Dependencies](#dependencies)
+4. [Launch file parameters](#launch-file-parameters)
+5. [State machine configuration file syntax](#state-machine-configuration-file-syntax)
+6. [State implementations](#state-implementations)
+7. [Examples](#examples)
+8. [MAS domestic-specific scenario state base](#mas-domestic-specific-scenario-state-base)
+
 ## Summary
 
 Creates and executes a smach state machine from a state machine description specified in a configuration file.
@@ -50,12 +60,11 @@ mas_execution_manager
 
 ## Launch file parameters
 
-The following parameters may be passed when launching the execution manager (all of them in the global namespace):
+The following parameters may be passed when launching the execution manager:
 * ``sm_config_file``: An absolute path of a state machine definition file
 * ``parent_sm_config_file``: An absolute path of a parent state machine definition file (optional; if there is no parent definition file, it is best to delete this parameter in order to avoid undesired parent-children state machine relationships)
 * ``save_sm_state``: Specifies whether the current state of the state machine should be saved for the purpose of later recovery (default False)
 * ``recover_sm``: Specifies whether a state machine should continue the execution from the last saved state (default False)
-* ``store_knowledge``: Only used by the scenario state base class. Specifies whether we want to store any knowledge during execution; if we do, a `mongodb_store.message_store.MessageStoreProxy` and `/kcl_rosplan/get_current_knowledge` clients are created (default False)
 
 ## State machine configuration file syntax
 
@@ -145,6 +154,8 @@ class StateName(smach.State):
     def __init__(self, **kwargs):
         smach.State.__init__(self, outcomes=['outcome_1', ... 'outcome_n'],
                              output_keys=['key_1, ..., key_n'])
+        self.sm_id = kwargs.get('sm_id', '')
+        self.state_name = kwargs.get('state_name', '')
         self.arg = kwargs.get('arg_name', <default_value>)
         ...
 
@@ -237,6 +248,8 @@ The three states of the state machine will be implemented as smach states as sho
 class MoveBase(smach.State):
     def __init__(self, **kwargs):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'failed_after_retrying'])
+        self.sm_id = kwargs.get('sm_id', '')
+        self.state_name = kwargs.get('state_name', '')
         self.destination_locations = kwargs.get('destination_locations', list())
         self.number_of_retries = kwargs.get('number_of_retries', 0)
         self.retry_count = 0
@@ -259,6 +272,8 @@ class LocateObject(smach.State):
     def __init__(self, **kwargs):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'failed_after_retrying'],
                              output_keys=['object_pose'])
+        self.sm_id = kwargs.get('sm_id', '')
+        self.state_name = kwargs.get('state_name', '')
         self.object = kwargs.get('object', '')
         self.number_of_retries = kwargs.get('number_of_retries', 0)
         self.retry_count = 0
@@ -280,6 +295,8 @@ class LocateObject(smach.State):
 class Pick(smach.State):
     def __init__(self, **kwargs):
         smach.State.__init__(self, outcomes=['succeeded', 'failed', 'failed_after_retrying'])
+        self.sm_id = kwargs.get('sm_id', '')
+        self.state_name = kwargs.get('state_name', '')
         self.object = kwargs.get('object', '')
         self.number_of_retries = kwargs.get('number_of_retries', 0)
         self.retry_count = 0
@@ -297,3 +314,45 @@ class Pick(smach.State):
                 self.retry_count += 1
                 return 'failed'
 ```
+
+## MAS domestic-specific scenario state base
+
+The state machine creator uses Smach, so it is sufficient if the states specified in the definition file inherit from `smach.State` as shown above.
+
+If the skill-based architecture in [`mas_domestic_robotics`](https://github.com/b-it-bots/mas_domestic_robotics) is additionally used, the `ScenarioStateBase` class defined in `scenario_state_base.py` (which inherits from `smach.State`) provides some additional functionalities for more structured action execution (in particular, knowledge base management with the help of [ROSPlan](https://github.com/b-it-bots/ROSPlan) as well as action dispatching to the action clients in `mas_domestic_robotics`). To manage knowledge and enable the invocation of the action clients, the `ScenarioStateBase` class defines the following members:
+* `sm_id`: ID of the state machine to which the state belongs
+* `state_name`: Name of the state
+* `action_name`: Name of an action that should be invoked from the state (as specified in the action client launcher, e.g. the [pickup client](https://github.com/b-it-bots/mas_domestic_robotics/blob/kinetic/mdr_planning/mdr_actions/mdr_manipulation_actions/mdr_pickup_action/ros/launch/pickup_client.launch))
+* `retry_count`: Number of times some an execution has been retried (used if the state implements recovery behaviours)
+* `executing`: Indicates whether an action has been dispatched and is being executed
+* `succeeded`: Indicates whether the execution of an action has succeeded
+* `action_dispatch_pub`: The action clients in `mas_domestic_robotics` wait for requests by subscribing to the `/kcl_rosplan/action_dispatch` topic (of type `rosplan_dispatch_msgs.ActionDispatch`); this is a publisher for this topic
+* `robot_name`: The name of the robot (optional to specify, but useful in a multi-robot scenario)
+* `attribute_fetching_client`: A client for the `/rosplan_knowledge_base/state/propositions` service (of type `rosplan_srvs.GetAttributeService`) that can be used for retrieving knowledge from the ROSPlan knowledge base
+* `msg_store_client`: A `mongodb_store.message_store.MessageStoreProxy` object for saving data using `mongodb_store`
+
+The following member functions are also defined in the base class:
+* `execute`: Method in which the execution of the state is taking place. Needs to be overriden by child classes
+* `get_dispatch_msg`: Creates a `rosplan_dispatch_msgs.ActionDispatch` message for the action client associated with the state. Needs to be overriden by child classes
+* `save_current_state`: Saves the current state in a `mongodb_store` database
+* `get_action_feedback`: The action clients in `mas_domestic_robotics` publish feedback to the `/kcl_rosplan/action_feedback` topic; the scenario state base has a subscriber for that topic - this method is the subscriber callback, setting the values of `executing` and `succeeded` depending on the message content
+* `say`: The scenario state base also has a publisher for the `/say` topic; this method takes a sentence as a string and publishes that one to `/say` so that a robot can vocalise it
+
+A prototypical definition of a state for using the MAS-specific scenario state base is shown below:
+```
+class StateName(ScenarioStateBase):
+    def __init__(self, save_sm_state=False, **kwargs):
+        super(ScenarioStateBase, self).__init__('action_name',
+                                                save_sm_state=save_sm_state,
+                                                outcomes=['outcome_1', ... 'outcome_n'],
+                                                output_keys=['key_1, ..., key_n'])
+        self.sm_id = kwargs.get('sm_id', '')
+        self.state_name = kwargs.get('state_name', '')
+        self.arg = kwargs.get('arg_name', <default_value>)
+        ...
+
+    def execute(self, userdata):
+        ...
+```
+
+If the states in a scenario state machine inherit from `ScenarioStateBase`, it is necessary to launch the ROSPlan components and mongodb_store together with the state machine creator. The [`mdr_rosplan_interface`](https://github.com/b-it-bots/mas_domestic_robotics/tree/devel/mdr_planning/mdr_rosplan_interface) package includes a launcher for these components. If states inherit from `ScenarioStateBase`, but do not use any of the functionalities of ROSPlan or mongodb_store, simply including this launcher is sufficient (as shown [here](https://github.com/b-it-bots/mas_domestic_robotics/blob/devel/mdr_planning/mdr_scenarios/mdr_demos/mdr_demo_describe_people/ros/launch/describe_people.launch)); if these functionalities are used, some of the arguments in the launch file need to be set (as illustrated [here](https://github.com/b-it-bots/mas_domestic_robotics/blob/devel/mdr_planning/mdr_scenarios/mdr_demos/mdr_demo_simple_pick_and_place/ros/launch/pick_and_place.launch)).
