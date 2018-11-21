@@ -11,12 +11,15 @@ from mdr_monitoring_msgs.msg import ExecutionState
 class ScenarioStateBase(smach.State):
     def __init__(self, action_name, outcomes,
                  input_keys=list(), output_keys=list(),
-                 save_sm_state=False):
-        smach.State.__init__(self, outcomes=outcomes,
-                             input_keys=input_keys,
-                             output_keys=output_keys)
-        self.sm_id = ''
-        self.state_name = ''
+                 save_sm_state=False, **kwargs):
+        smach.State.__init__(self, outcomes=outcomes, input_keys=input_keys, output_keys=output_keys)
+        self.sm_id = kwargs.get('sm_id', '')
+        if not self.sm_id:
+            raise ValueError('"sm_id" is not specified in the state machine YAML')
+        self.state_name = kwargs.get('state_name', '')
+        if not self.state_name:
+            raise ValueError('state.name is not specified in the state machine YAML')
+
         self.action_name = action_name
         self.save_sm_state = save_sm_state
         self.retry_count = 0
