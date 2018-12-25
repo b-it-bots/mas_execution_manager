@@ -328,8 +328,7 @@ If the skill-based architecture in [`mas_domestic_robotics`](https://github.com/
 * `succeeded`: Indicates whether the execution of an action has succeeded
 * `action_dispatch_pub`: The action clients in `mas_domestic_robotics` wait for requests by subscribing to the `/kcl_rosplan/action_dispatch` topic (of type `rosplan_dispatch_msgs.ActionDispatch`); this is a publisher for this topic
 * `robot_name`: The name of the robot (optional to specify, but useful in a multi-robot scenario)
-* `attribute_fetching_client`: A client for the `/rosplan_knowledge_base/state/propositions` service (of type `rosplan_srvs.GetAttributeService`) that can be used for retrieving knowledge from the ROSPlan knowledge base
-* `msg_store_client`: A `mongodb_store.message_store.MessageStoreProxy` object for saving data using `mongodb_store`
+* `kb_interface`: An instance of `mas_execution_manager.domestic_kb_interface.DomesticKbInterface` providing functionalities for interacting with a knowledge base
 
 The following member functions are also defined in the base class:
 * `execute`: Method in which the execution of the state is taking place. Needs to be overriden by child classes
