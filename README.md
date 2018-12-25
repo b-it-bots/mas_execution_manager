@@ -144,6 +144,8 @@ The following rules apply for the child state machine configuration:
 * `outcomes`: if not specified, the list of outcomes specified in the parent's state machine will be used. Outcomes that are specified here, but are not in the parent's state machine will be added to the list of outcomes
 * For each state, if the `remove` key is defined, the state will be removed from the list of states (provided that it is already there). On the other hand, if a state has the same `name` as a state in the parent state machine configuration, but is completely redefined in the child configuration, the definition of the state from the child configuration file will be used
 
+Our state machine specification has various similarities with [AADL](http://www.aadl.info/aadl/currentsite/) (compare for example https://github.com/osate/examples/blob/master/robot/emv2-behavior/robot.aadl); however, given that our focus here is only on state machines, the syntax is more lightweight. In addition, as discussed before, we are interested in state machine inheritance, which is a core aspect of our specification.
+
 ## State implementations
 
 Loading a state machine through a configuration file imposes some constraints on the implementation of a state. In particular, a state cannot have named arguments unless they have default values; in addition, all arguments that are defined in the configuration file are passed to the state's constructor as `kwargs`.
