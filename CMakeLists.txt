@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   smach
   roslint
+  mas_knowledge_base
 )
 
 roslint_python()

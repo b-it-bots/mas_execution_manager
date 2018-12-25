@@ -53,9 +53,7 @@ mas_execution_manager
 * ``rospy``
 * ``smach``
 * ``smach_ros``
-* ``mongodb_store``
-* ``rosplan_dispatch_msgs`` (only for the scenario state base)
-* ``rosplan_knowledge_msgs`` (only for the scenario state base)
+* [``mas_knowledge_base``](https://github.com/b-it-bots/mas_knowledge_base)
 * ``mdr_monitoring_msgs``
 
 ## Launch file parameters

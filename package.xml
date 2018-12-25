@@ -2,7 +2,7 @@
 <package format="2">
   <name>mas_execution_manager</name>
   <version>0.0.0</version>
-  <description>A package for loading scenarios specified as state machines</description>
+  <description>A package for loading and executing scenarios specified as state machines</description>
 
   <author email="aleksandar.mitrevski@h-brs.de">Alex Mitrevski</author>
   <maintainer email="robotics@h-brs.de">MAS robotics</maintainer>
@@ -13,10 +13,11 @@
   <build_depend>rospy</build_depend>
   <build_depend>smach</build_depend>
   <build_depend>roslint</build_depend>
-  <build_export_depend>rospy</build_export_depend>
-  <build_export_depend>smach</build_export_depend>
+  <build_depend>mas_knowledge_base</build_depend>
+
   <exec_depend>rospy</exec_depend>
   <exec_depend>smach</exec_depend>
+  <exec_depend>mas_knowledge_base</exec_depend>
 
   <export>
   </export>
