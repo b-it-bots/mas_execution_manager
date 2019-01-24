@@ -4,8 +4,11 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-    packages=['mas_execution_manager'],
-    package_dir={'mas_execution_manager': 'ros/src/mas_execution_manager'}
+    packages=['mas_execution', 'mas_execution_manager'],
+    package_dir={
+        'mas_execution': 'common/mas_execution',
+        'mas_execution_manager': 'ros/src/mas_execution_manager'
+    }
 )
 
 setup(**d)
