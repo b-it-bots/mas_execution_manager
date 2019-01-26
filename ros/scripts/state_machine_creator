@@ -7,7 +7,7 @@ import smach_ros
 from mongodb_store.message_store import MessageStoreProxy
 
 from mdr_monitoring_msgs.msg import ExecutionState
-from mas_execution_manager.sm_loader import SMLoader
+from mas_execution.sm_loader import SMLoader
 
 class StateMachine(smach.StateMachine):
     '''An interface for creating state machines from state machine description files

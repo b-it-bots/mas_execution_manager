@@ -1,9 +1,7 @@
 from __future__ import print_function
 import oyaml as yaml
 
-from mas_execution_manager.sm_params import (StateParams,
-                                             StateMachineParams,
-                                             SMFileKeys)
+from mas_execution.sm_params import StateParams, StateMachineParams, SMFileKeys
 
 class SMLoader(object):
     '''An interface for loading state machine configuration files
