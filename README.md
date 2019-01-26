@@ -4,15 +4,30 @@
 1. [Summary](#Summary)
 2. [Package organisation](#package-organisation)
 3. [Dependencies](#dependencies)
-4. [Launch file parameters](#launch-file-parameters)
-5. [State machine configuration file syntax](#state-machine-configuration-file-syntax)
-6. [State implementations](#state-implementations)
-7. [Examples](#examples)
-8. [MAS domestic-specific scenario state base](#mas-domestic-specific-scenario-state-base)
+5. [Scenario execution](#scenario-execution)
+    1. [State machine configuration file syntax](#state-machine-configuration-file-syntax)
+    2. [State implementations](#state-implementations)
+    3. [Examples](#examples)
+    4. [Launch file parameters](#launch-file-parameters)
+    5. [MAS domestic-specific scenario state base](#mas-domestic-specific-scenario-state-base)
 
 ## Summary
 
-Creates and executes a smach state machine from a state machine description specified in a configuration file.
+The `mas_execution_manager` includes various Python-based components that aim to simplify the process of working with finite state machines for developing robot applications. The execution manager is particularly focused on two aspects:
+* fault-tolerant action execution
+* scenario definition and execution
+
+The components in this repository are primarily used in the [mas_domestic_robotics](https://github.com/b-it-bots/mas_domestic_robotics) repository, but are kept separate in the hope that they will also be useful elsewhere.
+
+### Action execution
+
+To ensure a unified action execution development framework and encode explicit recovery procedures in the execution process, we model robot actions using fault-tolerant state machines (FTSMs); a definition and an implementation of a fault-tolerant state machine can be found [here](https://github.com/b-it-bots/ftsm). A fault-tolerant state machine includes five different states in which an action can be - `init`, `configuring`, `ready`, `running`, and `recovering` - and has a well-defined set of allowed transitions between the states.
+
+In this repository, we define a base class for implementing fault-tolerant actions that inherits from the [FTSM base class](https://github.com/b-it-bots/ftsm/blob/master/pyftsm/ftsm.py) and provides an interface to the the action execution ontology defined at [https://github.com/b-it-bots/action-execution](https://github.com/b-it-bots/action-execution).
+
+### Scenario execution
+
+In order to simplify the process of defining state machines for complex robot scenarios, we define a framework for creating and executing a [smach](http://wiki.ros.org/smach) state machine from a state machine description specified in a configuration file.
 
 State machine configuration files can be specified in two different ways:
 
@@ -34,12 +49,16 @@ mas_execution_manager
 |    CMakeLists.txt
 |    setup.py
 |    README.md
+|____common
+|    |____mas_execution
+|         |    __init__.py
+|         |    action_sm_base.py
+|         |    sm_params.py
+|         |____sm_loader.py
 |____ros
      |____src
      |    |____mas_execution_manager
      |    |    |    __init__.py
-     |    |    |    sm_loader.py
-     |    |    |    sm_params.py
      |    |    |____scenario_state_base.py
      |    |
      |____scripts
@@ -54,17 +73,12 @@ mas_execution_manager
 * ``smach``
 * ``smach_ros``
 * [``mas_knowledge_base``](https://github.com/b-it-bots/mas_knowledge_base)
+* [``ftsm``](https://github.com/b-it-bots/ftsm)
 * ``mdr_monitoring_msgs``
 
-## Launch file parameters
+## Scenario execution
 
-The following parameters may be passed when launching the execution manager:
-* ``sm_config_file``: An absolute path of a state machine definition file
-* ``parent_sm_config_file``: An absolute path of a parent state machine definition file (optional; if there is no parent definition file, it is best to delete this parameter in order to avoid undesired parent-children state machine relationships)
-* ``save_sm_state``: Specifies whether the current state of the state machine should be saved for the purpose of later recovery (default False)
-* ``recover_sm``: Specifies whether a state machine should continue the execution from the last saved state (default False)
-
-## State machine configuration file syntax
+### State machine configuration file syntax
 
 A state machine definition file is a `yaml` file with the following structure:
 ```
@@ -144,7 +158,7 @@ The following rules apply for the child state machine configuration:
 
 Our state machine specification has various similarities with [AADL](http://www.aadl.info/aadl/currentsite/) (compare for example https://github.com/osate/examples/blob/master/robot/emv2-behavior/robot.aadl); however, given that our focus here is only on state machines, the syntax is more lightweight. In addition, as discussed before, we are interested in state machine inheritance, which is a core aspect of our specification.
 
-## State implementations
+### State implementations
 
 Loading a state machine through a configuration file imposes some constraints on the implementation of a state. In particular, a state cannot have named arguments unless they have default values; in addition, all arguments that are defined in the configuration file are passed to the state's constructor as `kwargs`.
 
@@ -164,7 +178,7 @@ class StateName(smach.State):
 ```
 
 
-## Examples
+### Examples
 
 The example below shows a state machine definition for a simple scenario in which a robot needs to pick a bottle from a table.
 
@@ -315,7 +329,15 @@ class Pick(smach.State):
                 return 'failed'
 ```
 
-## MAS domestic-specific scenario state base
+### Launch file parameters
+
+The following parameters may be passed when launching the execution manager:
+* ``sm_config_file``: An absolute path of a state machine definition file
+* ``parent_sm_config_file``: An absolute path of a parent state machine definition file (optional; if there is no parent definition file, it is best to delete this parameter in order to avoid undesired parent-children state machine relationships)
+* ``save_sm_state``: Specifies whether the current state of the state machine should be saved for the purpose of later recovery (default False)
+* ``recover_sm``: Specifies whether a state machine should continue the execution from the last saved state (default False)
+
+### MAS domestic-specific scenario state base
 
 The state machine creator uses Smach, so it is sufficient if the states specified in the definition file inherit from `smach.State` as shown above.
 
