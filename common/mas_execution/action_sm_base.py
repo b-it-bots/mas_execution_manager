@@ -20,6 +20,8 @@ class ActionSMBase(FTSM):
             self.execution_requested = False
             return FTSMTransitions.RUN
         else:
+            if self.result:
+                self.result = None
             return FTSMTransitions.WAIT
 
     def running(self):
