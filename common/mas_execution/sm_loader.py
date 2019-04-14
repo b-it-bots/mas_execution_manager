@@ -71,23 +71,28 @@ class SMLoader(object):
                 try:
                     sm_params.states.remove(state_name)
                 except ValueError:
-                    pass
+                    print('[sm_loader, ERROR] State {0} could not be removed'.format(state_name))
             else:
                 state_params = StateParams()
                 state_params.name = state_data[SMFileKeys.STATE_NAME]
                 state_params.state_module_name = state_data[SMFileKeys.STATE_MODULE_NAME]
                 state_params.state_class_name = state_data[SMFileKeys.STATE_CLASS_NAME]
 
-                for transition in state_data[SMFileKeys.TRANSITIONS]:
-                    transition_data = transition[SMFileKeys.TRANSITION]
-                    state_params.transitions[transition_data[SMFileKeys.TRANSITION_NAME]] = \
-                    transition_data[SMFileKeys.RESULT_STATE]
+                if SMFileKeys.TRANSITIONS in state_data:
+                    for transition in state_data[SMFileKeys.TRANSITIONS]:
+                        transition_data = transition[SMFileKeys.TRANSITION]
+                        state_params.transitions[transition_data[SMFileKeys.TRANSITION_NAME]] = \
+                        transition_data[SMFileKeys.RESULT_STATE]
+                else:
+                    print('[sm_loader, WARNING] Transitions not defined for state {0}; reusing parent state machine transitions (if any)'.format(state_params.name))
 
                 if SMFileKeys.ARGS in state_data:
                     for arg in state_data[SMFileKeys.ARGS]:
                         arg_data = arg[SMFileKeys.ARG]
                         state_params.args[arg_data[SMFileKeys.ARG_NAME]] = \
                         arg_data[SMFileKeys.ARG_VALUE]
+                else:
+                    print('[sm_loader, INFO] No arguments passed for state {0}'.format(state_params.name))
 
                 for arg_name, arg_value in sm_params.global_params.items():
                     arg_data = arg[SMFileKeys.ARG]
