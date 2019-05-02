@@ -4,6 +4,7 @@ from std_msgs.msg import String
 import rosplan_dispatch_msgs.msg as plan_dispatch_msgs
 
 from mdr_monitoring_msgs.msg import ExecutionState
+from mas_knowledge_utils.domestic_ontology_interface import DomesticOntologyInterface
 from mas_knowledge_base.domestic_kb_interface import DomesticKBInterface
 
 class ScenarioStateBase(smach.State):
@@ -21,6 +22,8 @@ class ScenarioStateBase(smach.State):
         self.executing = False
         self.succeeded = False
         self.say_pub = rospy.Publisher('/say', String, latch=True, queue_size=1)
+        self.ontology_url = rospy.get_param('/ontology_url', '')
+        self.ontology_class_prefix = rospy.get_param('/ontology_class_prefix', '')
 
         self.action_dispatch_pub = rospy.Publisher('/kcl_rosplan/action_dispatch',
                                                    plan_dispatch_msgs.ActionDispatch,
@@ -31,6 +34,8 @@ class ScenarioStateBase(smach.State):
                          self.get_action_feedback)
 
         self.kb_interface = DomesticKBInterface()
+        self.ontology_interface = DomesticOntologyInterface(self.ontology_url,
+                                                            self.ontology_class_prefix)
         self.robot_name = self.kb_interface.robot_name
 
     def execute(self, userdata):
