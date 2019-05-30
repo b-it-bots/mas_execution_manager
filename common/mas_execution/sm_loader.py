@@ -25,18 +25,12 @@ class SMLoader(object):
         # we load the state machine file
         sm_data = SMLoader.__load_sm_file(sm_file)
 
-        # we add any new arguments that are defined in the child config
-        # to the list of global state machine arguments
-        if SMFileKeys.ARGS in sm_data:
-            for arg in sm_data[SMFileKeys.ARGS]:
-                arg_data = arg[SMFileKeys.ARG]
-                sm_params.global_params[arg_data[SMFileKeys.ARG_NAME]] = \
-                arg_data[SMFileKeys.ARG_VALUE]
-
+        # if we have a parent state machine, we first load its parameters
+        # and then update them based on the child config
         parent_sm_data = None
-        if parent_sm_file != '':
+        if parent_sm_file:
             parent_sm_data = SMLoader.__load_sm_file(parent_sm_file)
-            sm_params = SMLoader.__load_parent_config(parent_sm_data, sm_params)
+            sm_params = SMLoader.__load_parent_config(parent_sm_data)
 
         # we replace the state machine ID if it's redefined in the child config
         if SMFileKeys.ID in sm_data:
@@ -45,18 +39,14 @@ class SMLoader(object):
         # we add any new states that are defined in the child config
         # to the list of state machine states
         if SMFileKeys.STATES in sm_data:
-            states = sm_data[SMFileKeys.STATES]
-            for state in states:
-                if state not in sm_params.states:
-                    sm_params.states.append(state)
+            states = list(set(sm_params.states).union(set(sm_data[SMFileKeys.STATES])))
+            sm_params.states = states
 
         # we add any new outcomes that are defined in the child config
         # to the list of state machine outcomes
         if SMFileKeys.OUTCOMES in sm_data:
-            outcomes = sm_data[SMFileKeys.OUTCOMES]
-            for outcome in outcomes:
-                if outcome not in sm_params.outcomes:
-                    sm_params.outcomes.append(outcome)
+            outcomes = list(set(sm_params.outcomes).union(set(sm_data[SMFileKeys.OUTCOMES])))
+            sm_params.outcomes = outcomes
 
         # we add any new states that are defined in the child config
         # to the list of state machine states; we also remove states
@@ -65,13 +55,15 @@ class SMLoader(object):
         # in the child config are replaced by the child definition
         for state_description in sm_data[SMFileKeys.STATE_DESCRIPTIONS]:
             state_data = state_description[SMFileKeys.STATE]
+            state_name = state_data[SMFileKeys.STATE_NAME]
+            if state_name not in sm_params.states:
+                error = '[sm_loader] State {0} not declared in the state list'.format(state_name)
+                raise AssertionError(error)
+
             if SMFileKeys.REMOVE_STATE in state_data:
                 state_name = state_data[SMFileKeys.STATE_NAME]
                 sm_params.state_params.pop(state_name, None)
-                try:
-                    sm_params.states.remove(state_name)
-                except ValueError:
-                    print('[sm_loader, ERROR] State {0} could not be removed'.format(state_name))
+                sm_params.states.remove(state_name)
             else:
                 state_params = StateParams()
                 state_params.name = state_data[SMFileKeys.STATE_NAME]
@@ -81,8 +73,16 @@ class SMLoader(object):
                 if SMFileKeys.TRANSITIONS in state_data:
                     for transition in state_data[SMFileKeys.TRANSITIONS]:
                         transition_data = transition[SMFileKeys.TRANSITION]
-                        state_params.transitions[transition_data[SMFileKeys.TRANSITION_NAME]] = \
-                        transition_data[SMFileKeys.RESULT_STATE]
+                        transition_name = transition_data[SMFileKeys.TRANSITION_NAME]
+                        resulting_state = transition_data[SMFileKeys.RESULT_STATE]
+                        if resulting_state not in sm_params.states and \
+                           resulting_state not in sm_params.outcomes:
+                            error = 'Invalid transition {0} for state {1}\n'.format(state_name,
+                                                                                    transition_name)
+                            error += '-> {0} not declared in the state or outcome list'.format(resulting_state)
+                            raise AssertionError(error)
+
+                        state_params.transitions[transition_name] = resulting_state
                 else:
                     print('[sm_loader, WARNING] Transitions not defined for state {0}; reusing parent state machine transitions (if any)'.format(state_params.name))
 
@@ -95,7 +95,6 @@ class SMLoader(object):
                     print('[sm_loader, INFO] No arguments passed for state {0}'.format(state_params.name))
 
                 for arg_name, arg_value in sm_params.global_params.items():
-                    arg_data = arg[SMFileKeys.ARG]
                     state_params.args[arg_name] = arg_value
 
                 # we add the state machine ID and the state name as additional state arguments
@@ -103,6 +102,15 @@ class SMLoader(object):
                 state_params.args['state_name'] = state_params.name
 
                 sm_params.state_params[state_params.name] = state_params
+
+        # we add any new arguments that are defined in the child config
+        # to the list of global state machine arguments
+        if SMFileKeys.ARGS in sm_data:
+            for arg in sm_data[SMFileKeys.ARGS]:
+                arg_data = arg[SMFileKeys.ARG]
+                sm_params.global_params[arg_data[SMFileKeys.ARG_NAME]] = \
+                arg_data[SMFileKeys.ARG_VALUE]
+
         return sm_params
 
     @staticmethod
@@ -113,13 +121,17 @@ class SMLoader(object):
         sm_file -- path to a state machine file in yaml format
 
         '''
-        file_handle = open(sm_file, 'r')
-        sm_data = yaml.load(file_handle)
-        file_handle.close()
+        sm_data = None
+        try:
+            with open(sm_file, 'r') as file_handle:
+                sm_data = yaml.load(file_handle)
+        except Exception as exc:
+            print('[sm_loader, ERROR] {0}'.format(str(exc)))
+            raise
         return sm_data
 
     @staticmethod
-    def __load_parent_config(parent_sm_data, sm_params):
+    def __load_parent_config(parent_sm_data):
         '''Returns an 'mas_execution_manager.sm_params.StateMachineParams'
         object containing description parameters for a generic state machine description
 
@@ -127,6 +139,7 @@ class SMLoader(object):
         parent_sm_data -- an 'mas_execution_manager.sm_params.StateMachineParams' object
 
         '''
+        sm_params = StateMachineParams()
         sm_params.id = parent_sm_data[SMFileKeys.ID]
         sm_params.states = parent_sm_data[SMFileKeys.STATES]
         sm_params.outcomes = parent_sm_data[SMFileKeys.OUTCOMES]
@@ -139,14 +152,27 @@ class SMLoader(object):
         for state_description in parent_sm_data[SMFileKeys.STATE_DESCRIPTIONS]:
             state_data = state_description[SMFileKeys.STATE]
             state_params = StateParams()
-            state_params.name = state_data[SMFileKeys.STATE_NAME]
+            state_name = state_data[SMFileKeys.STATE_NAME]
+            if state_name not in sm_params.states:
+                error = '[sm_loader] State {0} not declared in the state list'.format(state_name)
+                raise AssertionError(error)
+
+            state_params.name = state_name
             state_params.state_module_name = state_data[SMFileKeys.STATE_MODULE_NAME]
             state_params.state_class_name = state_data[SMFileKeys.STATE_CLASS_NAME]
 
             for transition in state_data[SMFileKeys.TRANSITIONS]:
                 transition_data = transition[SMFileKeys.TRANSITION]
-                state_params.transitions[transition_data[SMFileKeys.TRANSITION_NAME]] = \
-                transition_data[SMFileKeys.RESULT_STATE]
+                transition_name = transition_data[SMFileKeys.TRANSITION_NAME]
+                resulting_state = transition_data[SMFileKeys.RESULT_STATE]
+                if resulting_state not in sm_params.states and \
+                   resulting_state not in sm_params.outcomes:
+                    error = 'Invalid transition {0} for state {1}\n'.format(state_name,
+                                                                            transition_name)
+                    error += '-> {0} not declared in the state or outcome list'.format(resulting_state)
+                    raise AssertionError(error)
+
+                state_params.transitions[transition_name] = resulting_state
 
             if SMFileKeys.ARGS in state_data:
                 for arg in state_data[SMFileKeys.ARGS]:
