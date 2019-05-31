@@ -61,12 +61,12 @@ class SMLoader(object):
                 raise AssertionError(error)
 
             if SMFileKeys.REMOVE_STATE in state_data:
-                state_name = state_data[SMFileKeys.STATE_NAME]
-                sm_params.state_params.pop(state_name, None)
                 sm_params.states.remove(state_name)
+                if state_name in sm_params.sm_params:
+                    sm_params.state_params.pop(state_name, None)
             else:
                 state_params = StateParams()
-                state_params.name = state_data[SMFileKeys.STATE_NAME]
+                state_params.name = state_name
                 state_params.state_module_name = state_data[SMFileKeys.STATE_MODULE_NAME]
                 state_params.state_class_name = state_data[SMFileKeys.STATE_CLASS_NAME]
 
