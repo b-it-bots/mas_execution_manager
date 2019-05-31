@@ -62,7 +62,7 @@ class SMLoader(object):
 
             if SMFileKeys.REMOVE_STATE in state_data:
                 sm_params.states.remove(state_name)
-                if state_name in sm_params.sm_params:
+                if state_name in sm_params.state_params:
                     sm_params.state_params.pop(state_name, None)
             else:
                 state_params = StateParams()
