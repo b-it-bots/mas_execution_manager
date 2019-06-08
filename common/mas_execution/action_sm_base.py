@@ -5,6 +5,7 @@ class ActionSMBase(FTSM):
     def __init__(self, name, dependencies, max_recovery_attempts=1):
         super(ActionSMBase, self).__init__(name, dependencies, max_recovery_attempts)
         self.execution_requested = False
+        self.preempted = False
         self.goal = None
         self.result = None
 
