@@ -1,0 +1,67 @@
+sm_id: pick_bottle_from_table
+states: [GO_TO_TABLE, FIND_OBJECT, GRASP_OBJECT]
+outcomes: [DONE, FAILED]
+state_descriptions:
+    - state:
+        name: GO_TO_TABLE
+        state_module_name: mdr_navigation_states.states
+        state_class_name: MoveBase
+        transitions:
+            - transition:
+                name: succeeded
+                state: FIND_OBJECT
+            - transition:
+                name: failed
+                state: GO_TO_TABLE
+            - transition:
+                name: failed_after_retrying
+                state: FAILED
+        arguments:
+            - argument:
+                name: destination_locations
+                value: [TABLE]
+            - argument:
+                name: number_of_retries
+                value: 3
+    - state:
+        name: FIND_OBJECT
+        state_module_name: mdr_perception_states.states
+        state_class_name: LocateObject
+        transitions:
+            - transition:
+                name: succeeded
+                state: GRASP_OBJECT
+            - transition:
+                name: failed
+                state: FIND_OBJECT
+            - transition:
+                name: failed_after_retrying
+                state: FAILED
+        arguments:
+            - argument:
+                name: object
+                value: bottle_n
+            - argument:
+                name: number_of_retries
+                value: 3
+    - state:
+        name: GRASP_OBJECT
+        state_module_name: mdr_manipulation_states.states
+        state_class_name: Pick
+        transitions:
+            - transition:
+                name: succeeded
+                state: DONE
+            - transition:
+                name: failed
+                state: GRASP_OBJECT
+            - transition:
+                name: failed_after_retrying
+                state: FAILED
+        arguments:
+            - argument:
+                name: object
+                value: bottle_n
+            - argument:
+                name: number_of_retries
+                value: 3
