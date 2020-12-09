@@ -4,7 +4,7 @@ from importlib import import_module
 import rospy
 import smach
 import smach_ros
-from mongodb_store.message_store import MessageStoreProxy
+# from mongodb_store.message_store import MessageStoreProxy
 
 from mdr_monitoring_msgs.msg import ExecutionState
 from mas_execution.sm_loader import SMLoader
@@ -18,11 +18,11 @@ class StateMachine(smach.StateMachine):
     '''
     def __init__(self, sm_data, recover_sm=False, save_sm_state=False):
         smach.StateMachine.__init__(self, outcomes=sm_data.outcomes)
-        self.msg_store_client = MessageStoreProxy()
-
+        # self.msg_store_client = MessageStoreProxy()
+        #
         saved_state = None
-        if recover_sm:
-            saved_state = self.get_saved_state(sm_data.id)
+        # if recover_sm:
+        #     saved_state = self.get_saved_state(sm_data.id)
 
         with self:
             if saved_state is not None:
@@ -43,39 +43,39 @@ class StateMachine(smach.StateMachine):
                                                        **state.args),
                                            transitions=state.transitions)
 
-    def get_saved_state(self, sm_id):
-        rospy.loginfo('[SM creator] Checking if the execution should continue from a saved state')
-        try:
-            state_msg = self.msg_store_client.query_named('current_state',
-                                                          ExecutionState._type)
-            execution_end_msg = self.msg_store_client.query_named('execution_end',
-                                                                  ExecutionState._type)
-
-            if state_msg and state_msg[0] is None:
-                return None
-
-            # we only consider saved states if the state machine did not
-            # finish fully the last time it was executed
-            if state_msg and state_msg[0].state_machine == sm_id:
-                if not execution_end_msg or \
-                execution_end_msg[0].stamp.secs < state_msg[0].stamp.secs:
-                    return state_msg[0].state
-            return None
-        except Exception as exc:
-            rospy.logerr('[SM creator] Error retriving knowledge about the current state')
-            rospy.logerr(str(exc))
-            return None
-
-    def save_execution_end(self, sm_id):
-        rospy.loginfo('[SM creator] Saving the end of the execution')
-        execution_state_msg = ExecutionState()
-        execution_state_msg.stamp = rospy.Time.now()
-        execution_state_msg.state_machine = sm_id
-        execution_state_msg.state = 'DONE'
-        try:
-            self.msg_store_client.insert_named('execution_end', execution_state_msg)
-        except:
-            rospy.logerr('[SM creator] Error while saving the execution end of %s' % sm_id)
+    # def get_saved_state(self, sm_id):
+    #     rospy.loginfo('[SM creator] Checking if the execution should continue from a saved state')
+    #     try:
+    #         state_msg = self.msg_store_client.query_named('current_state',
+    #                                                       ExecutionState._type)
+    #         execution_end_msg = self.msg_store_client.query_named('execution_end',
+    #                                                               ExecutionState._type)
+    #
+    #         if state_msg and state_msg[0] is None:
+    #             return None
+    #
+    #         # we only consider saved states if the state machine did not
+    #         # finish fully the last time it was executed
+    #         if state_msg and state_msg[0].state_machine == sm_id:
+    #             if not execution_end_msg or \
+    #             execution_end_msg[0].stamp.secs < state_msg[0].stamp.secs:
+    #                 return state_msg[0].state
+    #         return None
+    #     except Exception as exc:
+    #         rospy.logerr('[SM creator] Error retriving knowledge about the current state')
+    #         rospy.logerr(str(exc))
+    #         return None
+    #
+    # def save_execution_end(self, sm_id):
+    #     rospy.loginfo('[SM creator] Saving the end of the execution')
+    #     execution_state_msg = ExecutionState()
+    #     execution_state_msg.stamp = rospy.Time.now()
+    #     execution_state_msg.state_machine = sm_id
+    #     execution_state_msg.state = 'DONE'
+    #     try:
+    #         self.msg_store_client.insert_named('execution_end', execution_state_msg)
+    #     except:
+    #         rospy.logerr('[SM creator] Error while saving the execution end of %s' % sm_id)
 
 
 if __name__ == '__main__':
@@ -97,6 +97,6 @@ if __name__ == '__main__':
         rospy.spin()
     rospy.loginfo('%s complete' % (sm_data.id))
 
-    if save_sm_state:
-        state_machine.save_execution_end(sm_data.id)
+    # if save_sm_state:
+    #     state_machine.save_execution_end(sm_data.id)
     smach_viewer.stop()
