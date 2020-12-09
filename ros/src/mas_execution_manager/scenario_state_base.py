@@ -4,8 +4,8 @@ from std_msgs.msg import String
 import rosplan_dispatch_msgs.msg as plan_dispatch_msgs
 
 from mdr_monitoring_msgs.msg import ExecutionState
-from mas_knowledge_utils.domestic_ontology_interface import DomesticOntologyInterface
-from mas_knowledge_base.domestic_kb_interface import DomesticKBInterface
+# from mas_knowledge_utils.domestic_ontology_interface import DomesticOntologyInterface
+# from mas_knowledge_base.domestic_kb_interface import DomesticKBInterface
 
 class ScenarioStateBase(smach.State):
     def __init__(self, action_name, outcomes,
@@ -22,8 +22,8 @@ class ScenarioStateBase(smach.State):
         self.executing = False
         self.succeeded = False
         self.say_pub = rospy.Publisher('/say', String, latch=True, queue_size=1)
-        self.ontology_url = rospy.get_param('/ontology_url', '')
-        self.ontology_class_prefix = rospy.get_param('/ontology_class_prefix', '')
+        # self.ontology_url = rospy.get_param('/ontology_url', '')
+        # self.ontology_class_prefix = rospy.get_param('/ontology_class_prefix', '')
 
         self.action_dispatch_pub = rospy.Publisher('/kcl_rosplan/action_dispatch',
                                                    plan_dispatch_msgs.ActionDispatch,
@@ -33,10 +33,10 @@ class ScenarioStateBase(smach.State):
                          plan_dispatch_msgs.ActionFeedback,
                          self.get_action_feedback)
 
-        self.kb_interface = DomesticKBInterface()
-        self.ontology_interface = DomesticOntologyInterface(self.ontology_url,
-                                                            self.ontology_class_prefix)
-        self.robot_name = self.kb_interface.robot_name
+        # self.kb_interface = DomesticKBInterface()
+        # self.ontology_interface = DomesticOntologyInterface(self.ontology_url,
+        #                                                     self.ontology_class_prefix)
+        # self.robot_name = self.kb_interface.robot_name
 
     def execute(self, userdata):
         pass
@@ -46,7 +46,7 @@ class ScenarioStateBase(smach.State):
         execution_state_msg.stamp = rospy.Time.now()
         execution_state_msg.state_machine = self.sm_id
         execution_state_msg.state = self.state_name
-        self.kb_interface.insert_obj_instance('current_state', execution_state_msg)
+        # self.kb_interface.insert_obj_instance('current_state', execution_state_msg)
 
     def get_dispatch_msg(self):
         pass
