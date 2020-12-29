@@ -65,10 +65,29 @@ class SMLoader(object):
                 if state_name in sm_params.state_params:
                     sm_params.state_params.pop(state_name, None)
             else:
-                state_params = StateParams()
+                state_params = None
+                if state_name in sm_params.state_params:
+                    state_params = sm_params.state_params[state_name]
+                else:
+                    state_params = StateParams()
+
                 state_params.name = state_name
-                state_params.state_module_name = state_data[SMFileKeys.STATE_MODULE_NAME]
-                state_params.state_class_name = state_data[SMFileKeys.STATE_CLASS_NAME]
+
+                if SMFileKeys.STATE_MODULE_NAME in state_data:
+                    state_params.state_module_name = state_data[SMFileKeys.STATE_MODULE_NAME]
+                else:
+                    print('[sm_loader, WARNING] State module name not defined for state {0}; reusing parent module name'.format(state_params.name))
+                    if not state_params.state_module_name:
+                        error = 'state_module_name cannot be empty (it is empty for state {0})'.format(state_name)
+                        raise AssertionError(error)
+
+                if SMFileKeys.STATE_CLASS_NAME in state_data:
+                    state_params.state_class_name = state_data[SMFileKeys.STATE_CLASS_NAME]
+                else:
+                    print('[sm_loader, WARNING] State class name not defined for state {0}; reusing parent class name'.format(state_params.name))
+                    if not state_params.state_class_name:
+                        error = 'state_class_name cannot be empty (it is empty for state {0})'.format(state_name)
+                        raise AssertionError(error)
 
                 if SMFileKeys.TRANSITIONS in state_data:
                     for transition in state_data[SMFileKeys.TRANSITIONS]:
@@ -96,7 +115,7 @@ class SMLoader(object):
                             print('[sm_loader, ERROR] Error loading argument {0}'.format(arg_data))
                             print('[sm_loader, ERROR] {0}', str(exc))
                 else:
-                    print('[sm_loader, INFO] No arguments passed for state {0}'.format(state_params.name))
+                    print('[sm_loader, INFO] No arguments passed for state {0}; reusing parent state parameters (if any)'.format(state_params.name))
 
                 for arg_name, arg_value in sm_params.global_params.items():
                     state_params.args[arg_name] = arg_value
