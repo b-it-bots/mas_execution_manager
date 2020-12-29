@@ -89,8 +89,12 @@ class SMLoader(object):
                 if SMFileKeys.ARGS in state_data:
                     for arg in state_data[SMFileKeys.ARGS]:
                         arg_data = arg[SMFileKeys.ARG]
-                        state_params.args[arg_data[SMFileKeys.ARG_NAME]] = \
-                        arg_data[SMFileKeys.ARG_VALUE]
+                        try:
+                            state_params.args[arg_data[SMFileKeys.ARG_NAME]] = \
+                            arg_data[SMFileKeys.ARG_VALUE]
+                        except TypeError as exc:
+                            print('[sm_loader, ERROR] Error loading argument {0}'.format(arg_data))
+                            print('[sm_loader, ERROR] {0}', str(exc))
                 else:
                     print('[sm_loader, INFO] No arguments passed for state {0}'.format(state_params.name))
 
@@ -108,8 +112,12 @@ class SMLoader(object):
         if SMFileKeys.ARGS in sm_data:
             for arg in sm_data[SMFileKeys.ARGS]:
                 arg_data = arg[SMFileKeys.ARG]
-                sm_params.global_params[arg_data[SMFileKeys.ARG_NAME]] = \
-                arg_data[SMFileKeys.ARG_VALUE]
+                try:
+                    sm_params.global_params[arg_data[SMFileKeys.ARG_NAME]] = \
+                    arg_data[SMFileKeys.ARG_VALUE]
+                except TypeError as exc:
+                    print('[sm_loader, ERROR] Error loading argument {0}'.format(arg_data))
+                    print('[sm_loader, ERROR] {0}', str(exc))
 
         return sm_params
 
@@ -146,8 +154,12 @@ class SMLoader(object):
         if SMFileKeys.ARGS in parent_sm_data:
             for arg in parent_sm_data[SMFileKeys.ARGS]:
                 arg_data = arg[SMFileKeys.ARG]
-                sm_params.global_params[arg_data[SMFileKeys.ARG_NAME]] = \
-                arg_data[SMFileKeys.ARG_VALUE]
+                try:
+                    sm_params.global_params[arg_data[SMFileKeys.ARG_NAME]] = \
+                    arg_data[SMFileKeys.ARG_VALUE]
+                except TypeError as exc:
+                    print('[sm_loader, ERROR] Error loading argument {0}'.format(arg_data))
+                    print('[sm_loader, ERROR] {0}', str(exc))
 
         for state_description in parent_sm_data[SMFileKeys.STATE_DESCRIPTIONS]:
             state_data = state_description[SMFileKeys.STATE]
@@ -177,8 +189,12 @@ class SMLoader(object):
             if SMFileKeys.ARGS in state_data:
                 for arg in state_data[SMFileKeys.ARGS]:
                     arg_data = arg[SMFileKeys.ARG]
-                    state_params.args[arg_data[SMFileKeys.ARG_NAME]] = \
-                    arg_data[SMFileKeys.ARG_VALUE]
+                    try:
+                        state_params.args[arg_data[SMFileKeys.ARG_NAME]] = \
+                        arg_data[SMFileKeys.ARG_VALUE]
+                    except TypeError as exc:
+                        print('[sm_loader, ERROR] Error loading argument {0}'.format(arg_data))
+                        print('[sm_loader, ERROR] {0}', str(exc))
 
             for arg_name, arg_value in sm_params.global_params.items():
                 arg_data = arg[SMFileKeys.ARG]
