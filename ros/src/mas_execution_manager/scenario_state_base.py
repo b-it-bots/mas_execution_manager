@@ -1,7 +1,7 @@
 import rospy
 import smach
 from std_msgs.msg import String
-import rosplan_dispatch_msgs.msg as plan_dispatch_msgs
+# import rosplan_dispatch_msgs.msg as plan_dispatch_msgs
 
 from mdr_monitoring_msgs.msg import ExecutionState
 # from mas_knowledge_utils.domestic_ontology_interface import DomesticOntologyInterface
@@ -25,13 +25,13 @@ class ScenarioStateBase(smach.State):
         # self.ontology_url = rospy.get_param('/ontology_url', '')
         # self.ontology_class_prefix = rospy.get_param('/ontology_class_prefix', '')
 
-        self.action_dispatch_pub = rospy.Publisher('/kcl_rosplan/action_dispatch',
-                                                   plan_dispatch_msgs.ActionDispatch,
-                                                   queue_size=1)
-
-        rospy.Subscriber('/kcl_rosplan/action_feedback',
-                         plan_dispatch_msgs.ActionFeedback,
-                         self.get_action_feedback)
+        # self.action_dispatch_pub = rospy.Publisher('/kcl_rosplan/action_dispatch',
+        #                                            plan_dispatch_msgs.ActionDispatch,
+        #                                            queue_size=1)
+        #
+        # rospy.Subscriber('/kcl_rosplan/action_feedback',
+        #                  plan_dispatch_msgs.ActionFeedback,
+        #                  self.get_action_feedback)
 
         # self.kb_interface = DomesticKBInterface()
         # self.ontology_interface = DomesticOntologyInterface(self.ontology_url,
@@ -51,11 +51,11 @@ class ScenarioStateBase(smach.State):
     def get_dispatch_msg(self):
         pass
 
-    def get_action_feedback(self, msg):
-        if msg.information and msg.information[0].key == 'action_name' and \
-        msg.information[0].value == self.action_name:
-            self.executing = False
-            self.succeeded = msg.status == 'action achieved'
+    # def get_action_feedback(self, msg):
+    #     if msg.information and msg.information[0].key == 'action_name' and \
+    #     msg.information[0].value == self.action_name:
+    #         self.executing = False
+    #         self.succeeded = msg.status == 'action achieved'
 
     def say(self, sentence):
         say_msg = String()
