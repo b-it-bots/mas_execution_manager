@@ -10,9 +10,17 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-sm', '--sm_path', type=str, required=True,
                            help='Path to a state machine definition file')
+    argparser.add_argument('-psm', '--parent_sm_path', type=str, default=None,
+                           help='Path to a parent state machine definition file')
 
     args = argparser.parse_args()
-    sm_data = SMLoader.load_sm(args.sm_path)
+    sm_path = args.sm_path
+    parent_sm_path = args.parent_sm_path
+    sm_data = None
+    if parent_sm_path is not None:
+        sm_data = SMLoader.load_sm(sm_path, parent_sm_path)
+    else:
+        sm_data = SMLoader.load_sm(args.sm_path)
 
     graph = nx.DiGraph()
     for _, state in sm_data.state_params.items():
