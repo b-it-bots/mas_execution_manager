@@ -151,7 +151,7 @@ class SMLoader(object):
         sm_data = None
         try:
             with open(sm_file, 'r') as file_handle:
-                sm_data = yaml.load(file_handle)
+                sm_data = yaml.safe_load(file_handle)
         except Exception as exc:
             print('[sm_loader, ERROR] {0}'.format(str(exc)))
             raise
