@@ -55,7 +55,7 @@ class ScenarioStateBase(smach.State):
         if msg.information and msg.information[0].key == 'action_name' and \
         msg.information[0].value == self.action_name:
             self.executing = False
-            self.succeeded = msg.status == 'action achieved'
+            self.succeeded = msg.status == plan_dispatch_msgs.ActionFeedback.ACTION_SUCCEEDED_TO_GOAL_STATE
 
     def say(self, sentence):
         say_msg = String()
